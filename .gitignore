@@ -1,0 +1,13 @@
+*.pth
+*.jpg
+*.png
+*.pyc
+/tmp/*
+*tmp*
+/paper_figure/*
+.tmp/*
+visuals/*
+*.npy
+*tfevent*
+*.pdf
+*.csv

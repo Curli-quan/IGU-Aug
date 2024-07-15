@@ -1,0 +1,774 @@
+% CVPR 2023 Paper Template
+% based on the CVPR template provided by Ming-Ming Cheng (https://github.com/MCG-NKU/CVPR_Template)
+% modified and extended by Stefan Roth (stefan.roth@NOSPAMtu-darmstadt.de)
+
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+%%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
+\usepackage[review]{cvpr}      % To produce the REVIEW version
+%\usepackage{cvpr}              % To produce the CAMERA-READY version
+%\usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
+
+% Include other packages here, before hyperref.
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+
+\usepackage{multirow}
+\usepackage{algorithmic}
+\usepackage{threeparttable}
+\usepackage{subcaption}
+\usepackage{xcolor}
+% \usepackage{subfig}
+\usepackage{subcaption}
+% \usepackage{bbold}
+\usepackage{dsfont}
+
+\newcommand{\bheading}[1]{{\noindent{\textbf{#1}}}}
+\newcommand{\eheading}[1]{{\noindent{\emph{#1}}}}
+\newcommand{\tabincell}[2]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+
+
+% It is strongly recommended to use hyperref, especially for the review version.
+% hyperref with option pagebackref eases the reviewers' job.
+% Please disable hyperref *only* if you encounter grave issues, e.g. with the
+% file validation for the camera-ready version.
+%
+% If you comment hyperref and then uncomment it, you should delete
+% ReviewTempalte.aux before re-running LaTeX.
+% (Or just hit 'q' on the first LaTeX run, let it finish, and you
+%  should be clear).
+\usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
+
+
+% Support for easy cross-referencing
+\usepackage[capitalize]{cleveref}
+\crefname{section}{Sec.}{Secs.}
+\Crefname{section}{Section}{Sections}
+\Crefname{table}{Table}{Tables}
+\crefname{table}{Tab.}{Tabs.}
+
+
+%%%%%%%%% PAPER ID  - PLEASE UPDATE
+\def\cvprPaperID{3827} % *** Enter the CVPR Paper ID here
+\def\confName{CVPR}
+\def\confYear{2023}
+
+
+\begin{document}
+
+%%%%%%%%% TITLE - PLEASE UPDATE
+\title{\LaTeX\ Author Guidelines for \confName~Proceedings}
+
+\author{First Author\\
+Institution1\\
+Institution1 address\\
+{\tt\small firstauthor@i1.org}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+\and
+Second Author\\
+Institution2\\
+First line of institution2 address\\
+{\tt\small secondauthor@i2.org}
+}
+\maketitle
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+   Contrastive learning (CL) is a form of self-supervised learning and has been widely used for various tasks. Different from widely studied instance-level contrastive learning, pixel-wise contrastive learning mainly helps with pixel-wise tasks such as medical landmark detection.The counterpart to an instance in instance-level CL is a pixel, along with its neighboring context, in pixel-wise CL. Aiming to build better feature representation, there is a vast literature about designing instance augmentation strategies for instance-level CL; but there is little similar work on pixel augmentation for pixel-wise CL with a pixel granularity. In this paper, we attempt to bridge this gap. We first classify a pixel into three categories, namely \underline{low-, medium-, and high-informative}, based on the information quantity the pixel contains. Inspired from the ``InfoMin" principle, we then design separate augmentation strategies for each category in terms of augmentation intensity and sampling ratio. Extensive experiments validate that our \textbf{information-guided pixel augmentation} strategy succeeds in encoding more discriminative representations and surpassing other competitive approaches in unsupervised local feature matching. Furthermore, our pretrained model improves the performance of supervised models.
+To best of our knowledge, we are the first to propose a pixel augmentation method with a pixel granularity for enhancing unsupervised pixel-wise contrastive learning.
+\end{abstract}
+
+
+
+%%%%%%%%% BODY TEXT
+\section{Introduction}
+
+% Background 
+Contrastive learning (CL) is a form of self-supervised learning (SSL), where data provides the supervision via utilizing proxy tasks. Comparing with previous SSL approaches, contrastive learning focuses on learning representations of data in the embedding space by contrasting between samples with same and different distributions \cite{}. Currently it has been widely applied to boost the performance of classification, a typical instance-level task. However, when applying instance-level CL for pixel-level downstream tasks, {\textit e.g.}, segmentation, object detection and landmark detection, it offers limited help when transferring instance-level contrastive learning methods in pixel-level downstream tasks directly, due to the discrepancy of supervision granularity. 
+
+%Contrastive learning (CL), which is a form of self-supervised learning, is now widely used, showing off its power in various tasks~\cite{he2020momentum,chen2020big,oord2018representation}. 
+% Nowadays, most powerful SSL models are trained via contrastive learning and applied to various down-stream tasks, such as pre-training models, one-shot classification, etc. 
+% However, most CL works address instance-wise self-supervised issues, but offer limited help to pixel-wise downstream tasks, {\textit e.g.}, segmentation, object detection and landmark detection. 
+
+%Therefore, to tackle this problem, researchers~\cite{quan2021images,yao2021one,DBLP:conf/cvpr/XieL00L021,DBLP:conf/nips/ChaitanyaEKK20} \textcolor{red}{[]MORE references needed]} adopt a pixel-wise way to train CL models, benefiting many tasks such as medical landmark detection, which takes a key role in medical imaging that helps doctors locate the key positions of organs or bones \cite{sun2021loftr}. 
+% The goal of pixel-wise CL is to pull features of identical pixels close, and push features of different pixels away. 
+% This technique is widely applied to many tasks including %such as instance segmentation, subject detection and etc. Besides, another important application is 
+
+One key issue in CL is designing positive and negative pairs to learn an robust embedding space such that the positives stay closer in the space while the negatives are pushed away. 
+To generate positive and negative pairs, data augmentation, which takes an crucial role in CL, is used to create various views by reforming the semantic information with different contents. 
+% Stronger augmentation creates more views while changing more discriminative information. 
+While this is widely studied in instance-level CL, {\it how to augment pixels for pixel-wise contrastive learning effectively} remains a challenge. To tackle this problem, a few pixel-level CL methods \cite{} are proposed with limited success to extract features at a pixel level. \textcolor{red}{They mostly augment pixels with an instance granularity. [IS THIS right?]}
+In this paper, we aim to answer this challenge by performing augmentation \textit{with a pixel granularity}.
+%We deal with it in two aspects: (1) reducing low informative pixels and (2) applying adaptive augmentation intensity for high informative pixels.
+
+Intuitively, for the pixel-wise task such as landmark detection, the pixels with rich information are more important. This intuition motivates us to concentrate on pixels in more informative regions.
+Therefore, we introduce image information entropy (IIE), which is inspired from information theory~\cite{DBLP:journals/sigmobile/Shannon01} to measure the information of pixels within a specific region. Then, we select and compare more contrastive pixel pairs in more informative regions according to the IIE scores. 
+
+% Secondly, Tian {\it et al.}~\cite{tian2020makes} obtain better training pairs by searching optimal augmentation intensity. 
+To explore optimal augmentation intensity for instance-level CL, Tian {\it et al.}~\cite{tian2020makes} propose the so-called  ``InfoMin" principle: A good set of views are those which share the minimal information necessary to perform well in the downstream task~\cite{tian2020makes}. Besides, learning representations that throw out information about nuisance variables is preferable as it can improve generalization and decrease sample complexity on downstream tasks. They also demonstrate that the InfoMin principle can be practically applied by simply seeking stronger data augmentation to further reduce mutual information toward a sweet spot. 
+
+When it comes to pixel-wise CL, pixels are of different quantities of information and bear different thresholds of minimal necessary semantic information. Therefore, in this paper, we apply different strategies to different pixels: weak augmentation for high-info pixels and strong augmentation for low-info pixels. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/paper_fig1_2.png}
+    \caption{The curve of PSI (\textcolor{red}{red line}) against different IIE thresholds, which split pixels into three categories: low-info pixels (left of \textcolor{blue}{blue} dashed line); medium-info pixels (between \textcolor{blue}{blue} and \textcolor{green}{green} dashed lines); high-info pixels (right of \textcolor{green}{green} dashed line).}
+    \label{fig:psi_ddi}
+\end{figure}
+
+In sum, we propose an \textbf{information-guided pixel augmentation} strategy for pixel-wise contrastive learning, with the following notable contributions: 
+\begin{itemize}
+\item To the best of our knowledge, we are \textbf{the first} to propose a pixel augmentation method \textit{with a pixel granularity} for enhancing unsupervised pixel-wise contrastive learning. 
+\item We introduce the metric of {\bf image information entropy} (IIE) to quantify the information a pixel contains. Guided by the IIE value, we then divide pixels into low-, medium-, and high-info groups and demonstrate the importance of high- and medium-info pixels in pixel-wise contrastive learning.
+\item We leverage \textbf{the ``InfoMin" principle} and empirically prove its applicability to pixel-wise CL by using adaptive augmentation intensities for different groups of pixels, which leads to better experimental performances.
+\item We extensively validate the effectiveness of our core strategies that include the biased selection of high-info pixels and the use of adaptive augmentation strategies, %that help conventional SSL methods~\cite{yao2021one} train a more powerful pretrained model, 
+which not only enhances one-shot landmark detection~\cite{yao2021one}, but also improves the performance of state-of-the-art supervised landmark detection model ERE~\cite{McCouat_2022_CVPR} from 1.42mm to 1.39mm and from 0.396mm to 0.377mm in Cephalometric and HandXray datasets, respectively. \textcolor{red}{THESE numbers are less impressive}
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figures/pipeline.png}
+    \caption{Pipeline of our method, consisting of 3 steps. }
+    \label{fig:pipeline}
+\end{figure}
+
+\section{Related Work}
+\subsection{Contrastive learning}
+% Self-supervised learning (SSL) leverages information in data itself as the supervision, providing a solution for training from unlabeled data. Among all varieties of SSL, 
+Contrastive learning (CL) is one of the most powerful paradigms of self-supervised learning, leading to state-of-the-art performances in many vision tasks. Most existing methods, like MoCo~\cite{chen2020improved, he2020momentum}, SimCLR~\cite{DBLP:conf/icml/ChenK0H20, chen2020big}, BYOL~\cite{DBLP:conf/nips/GrillSATRBDPGAP20} and BarlowTwins~\cite{DBLP:conf/icml/ZbontarJMLD21}, are designed and optimized in instance-level comparisons, benefiting the trained model with more discriminative and generalizable representations. But such instance-level modeling leads to sub-optimal representations for downstream tasks requiring pixel-level prediction, {\it e.g.}, segmentation, object detection, and landmark detection. Recently there are some pixel-level methods attempting to learn dense feature representations. Xie {\it et al.} \cite{DBLP:conf/cvpr/XieL00L021} propose a pixel-level contrastive learning framework and achieve better performance on dense tasks like segmentation and detection. Multi-scale pixel-wise contrastive proxy task based on InfoNCE loss~\cite{DBLP:journals/jmlr/GutmannH10, oord2018representation} is introduced in \cite{yao2021one} and achieves great performance in medical landmark detection, which is used for our feature extractor. Besides, some researchers introduce pixel-wise contrastive learning into supervised or semi-supervised learning and succeed to improve their models~\cite{DBLP:conf/iclr/LiuZJD22,DBLP:conf/iccv/ZhongYWY0W21,DBLP:conf/ijcai/WangLL0K22}.
+
+\subsection{View generation}
+% [1] Improving contrastive learning by visualizing feature transformation
+% [2] What makes for good views for contrastive learning?
+Views generation is a hot topic which has been widely researched. Some researchers try to use effective data augmentation to create more views. For examples, Mixup~\cite{zhang2018mixup,verma2019manifold,yun2019cutmix,kim2020mixco} blend images and their labels in pair-style to strengthen supervised learning methods.
+% MixUp for contrastive learning Mixup \cite{zhang2018mixup} and its numerous variants \cite{verma2019manifold,yun2019cutmix,kim2020mixco} provide highly effective data augmentation strategies when paired with a cross-entropy loss for supervised and semi-supervised learning.
+Manifold mixup~\cite{verma2019manifold} is designed for supervised learning, applying regularization on features, while Un-mix~\cite{shen2022mix} recommends mixup in the image/pixel space for self-supervised learning; i-Mix~\cite{DBLP:conf/iclr/LeeZSLSL21} regularizes the training progress in contrastive training by mixing instances in both input and virtual label spaces. MoChi~\cite{kalantidis2020hard} proposes mixing the negative samples in the embedding space for hard negatives augmentation to help with CL models but hurt the classification accuracy. Zhu {\it et al.}~\cite{zhu2021improving} mix both positive and negative samples to further create more views to boost CL. Besides, some other methods control the selection of views, such as Robinson {\it et al.}~\cite{robinson2020contrastive} trying to select top-k hardest views as negative views. 
+In this paper, we introduce IIE to guide the generation process of positive pairs, and apply adaptive augmentation to generate more various pixels for pixel-wise CL effectively. 
+% Positive features are extrapolated to increase the hardness of positives, and negative features in the memory queue are interpolated to increase the diversity. 
+
+\section{Preliminaries}
+
+\subsection{Contrastive learning setup}
+Contrastive learning aims to learn representation by clustering \textit{positive pairs}, representing similar samples with the same semantic content, and discriminating \textit{negative pairs}, representing dissimilar samples with different semantic content. Specifically, the positive pairs are often obtained from views generated from the same image with different augmentations.
+Similar to instance-wise CL, pixel-wise CL considers image patches at the identical location are positive pairs. 
+
+Let $p_{data}$ be the data distribution and $p_{pos}(\cdot, \cdot)$ the distribution of positive pairs. We have \textit{contrastive loss}, which has been shown effective by many recent contrastive learning methods~\cite{oord2018representation,yao2021one}, as follows:
+\begin{equation}
+\begin{aligned}
+    &\mathcal{L}_\text{contrastive}(f;\tau,M) = \\
+    &\underset{ \underset{\{\mathbf{x}^-_i\}^M_{i=1} \overset{\text{i.i.d}}{\sim} p_\texttt{data}}{(x,x^+) \sim p_{pos}}}{\mathbb{E}} \Big[-\log\frac{e^{f(\mathbf{x})^\top f(\mathbf{x^+}) / \tau}}{e^{f(\mathbf{x})^\top f(\mathbf{x^+}) / \tau} + \sum_{i=1}^M e^{f(\mathbf{x}_i^-)^\top f(\mathbf{x^+}) / \tau}} \Big] , \\
+\end{aligned}
+\label{eq:loss1}
+\end{equation}
+where $f$ is the feature to be learned, $\tau>0$ is a temperature hyper-parameter, and $M$ is the number of negative samples.  
+The standard form of contrastive loss in Eqn. (\ref{eq:loss1}) can be rewritten as follows:
+\begin{equation}
+\begin{aligned}
+    &\mathcal{L}_\text{contrastive}(f;\tau,M) = - \frac{1}{\tau} \underset{(x,x^+) \sim p_{pos}}{\mathbb{E}} [f(\mathbf{x})^\top f(\mathbf{x^+})] \\
+    &+\underset{ \underset{\{\mathbf{x}^-_i\}^M_{i=1} \overset{\text{i.i.d}}{\sim} p_\texttt{data}}{(x,x^+) \sim p_{pos}}}{\mathbb{E}} \Big[ \log \Big( e^{f(\mathbf{x})^\top f(\mathbf{x^+}) / \tau} + \sum_{i} e^{f(\mathbf{x}_i^-^\top )f(\mathbf{x^+}) / \tau}\Big) \Big]. 
+\end{aligned}
+\label{eq:eq2}
+\end{equation}
+
+\subsection{Indicators} \label{sec:indicators}
+%For more convincing analysis, it is rational to find some indicators to comprehend the views with statistic description. 
+To better characterize pixels and their relationships, we hereby introduce three indicators: (1) Image Information Entropy (IIE); (2) {Positive similarity indicator} (PSI); (3) {Mutual information} (MI).
+
+{\it Image Information Entropy} (IIE). IIE is a metric to quantify the information of a pixel using a small patch centered at this pixel in our method. For a specific pixel $p$, we crop a $k \times k$ patch $X_p$ whose center locates at $p$, obtain the grayscale value distribution $\mathcal{G}$, and calculate the entropy of $\mathcal{G}$ as the entropy of the pixel $p$.
+\begin{equation}
+% \begin{aligned}
+    H(p) = H(\mathcal{G}) = - \sum_{g \in \mathcal{G}} P(g) \log P(g)
+% \end{aligned}
+    % H(x) = {\mathbb{E}} [\log(P(x=c_k))],
+\end{equation}
+% where $x$ is value of a pixel in $X$, and $C$ refers to the pre-defined value range. For example in 2D images, $C = \{c_k, c_k \in [0,255], c_k \in \mathbb{Z}\}$.
+
+{\it Positive similarity indicator} (PSI). As discussed in \cite{tian2020makes,zhu2021improving}, an effective positive pair prefers to convey more variance of one instance and keep necessary shared information only. In other words, a low similarity between a positive pair contributes more to CL. 
+From the perspective of models, the term $\mathbb{E}[f(\mathbf{x})^\top f(\mathbf{x^+})]$ in Eqn.~(\ref{eq:eq2}) captures the degree of variance of positive pairs from models. We term it as positive similarity indicator. 
+\begin{equation}
+    S(x) = {\mathbb{E}} [f(\mathbf{x})^\top f(\mathbf{x^+})],
+\end{equation}
+where $f(\mathbf{x})$ and $f(\mathbf{x}^+)$ are the features of an image patch $\mathbf{x}$ and its augmented version $\mathbf{x}^+$, respectively. A small value of PSI indicates a large variance of pixels or patches. In our study, we find that the sampling and generation of patches affects the fluctuation of PSI in pixel-wise contrastive learning. 
+% PSI depicts the variance of views and smaller PSI indicates larger variance. As discussed in \cite{zhu2021improving}, effective positive pair prefers to convey more variance of one instance, which performs a lower positive similarities in training stage. However, the deeper relationship between positive similarities of positive sample pairs and the performance of models deserves more efforts to explore. In our study, we find that the sampling and generation of views affect the fluctuation of PSI in pixel-wise contrastive learning. 
+% However, PSI can only demonstrate the similarity between two views, and the degree of difference of views cannot be represented by PSI. Therefore, we introduce DDI which estimated by the InfoNCE loss of specific views and its augmented version as positive pair and their nearby counterparts as negative pairs. 
+
+{\it Mutual information} (MI). MI is a metric to assess the statistical relevance of two entities. Here we use MI to estimate the relevance of two patches of interest. In practice, similar to IIE, we first obtain the grayscale value distributions $\mathcal{G}_p$ and $\mathcal{G}_q$ of pixels $p$ and $q$ and then calculate the mutual information between $\mathcal{G}_p$ and $\mathcal{G}_q$.
+\begin{equation}
+%\begin{aligned}
+    I[p;q] = \sum_{y \in \mathcal{G}_q} \sum_{x \in \mathcal{G}_p} P_{\mathcal{G}_p,\mathcal{G}_q} (x,y) log \Big(\frac{P_{\mathcal{G}_p,\mathcal{G}_q} (x,y)}{P_\mathcal{G}_p (x) P_\mathcal{G}_q (y)} \Big).
+%\end{aligned}
+\end{equation}
+
+\subsection{Task description}
+In this study, we focus on a medical application of local feature matching problem, that is, medical landmark detection. We follow \cite{quan2021images} to build our basic encoder, which is trained by pixel-wise contrastive learning. Specifically, in the training stage, two encoders $F$ and $F'$ with the same architecture are fed with the original image $X$ and its augmented version $X'$, respectively. Next, the features from different encoders but with response to the same corresponding pixel are matched to calculate the CL loss.
+
+In the inference stage, we denote the set of points to match by $P=\{p_1,p_2,\dots,p_L\}$. Suppose that $p_l^T \in P^T$ is the $l^{th}$ point in the template $T$, its corresponding $p_l^X$ in the image $X$ is found by the following \textit{searching-and-maximizing} problem:
+\begin{equation}
+p_l^X = \arg\max_{p} ~ s[~F \circ T(p_l^T), F \circ X(p)~]; ~p_l^T \in P^T,
+\label{eq:s}
+\end{equation}
+where $p$ is coordinates of a pixel, $s$ is a similarity function, and $F\circ X(p)$ computes the feature map for the image $X$ and then extracts the feature vector at pixel $p$. The goal of local feature matching is to accurately match points with semantic consistency. It should be noted that all analysis experiments presented below are conducted on the Cephalometric dataset.
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.95\linewidth]{figures/probmap.png}
+%     \caption{(a) Original image (b) Entropy map. (c) (d) MISSING...}
+%     \label{fig:probmap}
+% \end{figure}
+
+% \subsection{Multi-view Minimal Sufficient Encoder}
+% According to \cite{tian2020makes}, the well-trained encoder can be seen as a sufficient encoder for its training data. And the minimal sufficient encoder is which trained with views of minimal mutual information. 
+% Different from settings in \cite{tian2020makes} which aims at instance-wise contrastive learning, we want to generate optimal views for pixel-wise contrastive learning in which each pixel can be clustered into an identical class. 
+% \textbf{Definition 1}. \textit{(Multi-view Minimal Sufficient Encoder)}. A minimal sufficient encoder $f^*$ is multi-task minimal sufficient encoder for tasks $\mathcal{T} = {v1, v2, ...}$ if and only if $I(f^*(v1); v1) = I(f_1(v1), v1)$ and $I(f^*(v2), v2) = I(f_2(v2), v2)$, where $f_1, f_2, \dots$ are minimal sufficient encoder for $\mathbf{v_1}, \mathbf{v_2}, \dots$.
+% % Definition 2. (Task conflict). Suppose $F_1, F_2$ are the set of the optimal encoder for tasks $T1, T2$. We call the task conflict for the fused encoder $f$ if $F_1 \cap F_2 = \o$
+% Definition 2. (Task conflict). Suppose $F, F_1$ are the set of the optimal encoders for tasks ${T}, T_1$ and $F*$ are the optimal encoders for $\{T,T_1\}$. We call it task conflict if $F^* \cap F = \o$.
+% % This leads to the solutions of noisy views.
+% % In other words, if downstream task T1 and T2 are conflicted, $f$ can not be the optimal encoder for both T1 and T2. 
+% Or we can say, adding conflict tasks will degrade the performance of previous tasks.
+% Pixel-wise contrastive learning are conflict -> experiments 
+% -> discard low entropy and focus on high entropy
+% % Proposition 2. optimal views related to tasks 
+% % -> augment select / search
+% Definition 2. (Optimal Representation for a Task). For a task $T$ whose goal is to predict label $y$ from the input data $x$, the optimal representation $z^*$ encoded from data $x$ is the minimal sufficient statistic with respect to label $y$.
+% \begin{equation}
+%     \tau = \arg \min I(\tau(v1), v1) >= I(z*, v1) = I(y, v1)
+% \end{equation}
+% However, in practice $f$ can not be the minimal sufficient encoder for all tasks in the same time because (1) tasks hinder each other in some extent. (2) fixed augmentations can not fit views of all classes.
+
+% Specifically, (1) experiments show that each class dose not reach its best performance~\ref{fig}. task-relatedness~\ref{fig}, high entropy areas are more related with tasks. 
+% (2) 
+
+\section{Method}
+% According to Figure~\ref{fig:psi_ddi}, we can know that different pixels behave differently, that is, medium-info pixels have the lower PSI than high-info pixels, meaning that they have a larger variance among the feature space. In fact, each pixel for contrastive learning can be seen as an identical class. Therefore, ideally we can apply the InfoMin principle on pixels through minimizing the below loss,
+% \begin{equation}
+%     \mathcal{L} = \sum_i \mathcal{L}(\tau(x_i, A_i), x_i)
+% \end{equation}
+% However, it is hard to estimate a different $A_i$ for each pixel $x_i$ due to its time-consuming nature, thus a practical way is to cluster $x_i$ by their IIE scores. 
+Pixels behave differently as shown in Figure~\ref{fig:psi_ddi}, inspiring us to treat them with different strategies for each pixel. We naturally reform the standard contrastive loss into a pixel-wise adaptive loss:
+\begin{equation}
+    \mathcal{L} = \sum_i \mathcal{L}_i(\rho_i, A_i) = \sum_i \rho_i \mathcal{L}(\tau(x_i, A_i), x_i),
+\end{equation}
+where $x_i$ refers to a pixel (along with its content in image patch), $\tau(x_i, A_i)$ refers to transformation on $x_i$ with augmentation parameters $A_i$ and $\rho_i$ refers to the weights of $x_i$ during training. However, the above ideal case of customizing strategies $\{\rho_i, A_i\}$ for each pixel $x_i$ is hard to achieve due to its time-consuming nature, thus a practical way to cluster $x_i$ into several classes and adjust $\{\rho, A \}$ for each class. 
+
+\subsection{Information-guided pixel categorization} \label{sec:lowinfo}
+%In this section, we discuss the details of low informative pixels and propose a strategy: reduce the proportion of low informative entropy pixels and increase others. Following the above discussion, we know different pixels have different quantity of information.
+% To research the traits of pixels in specific information ranges, two indicators are introduced to quantize their characteristics: 
+When clustering $x_i$, it is necessary to introduce two tools to quantize their characteristics: 
+(1) {\it Image Information Entropy} (IIE); (2) {\it Positive Similarity Indicator} (PSI), which are already detailed in section~\ref{sec:indicators}. Figure~\ref{fig:psi_ddi} shows a U-shape curve of PSI against IIE, splitting pixels into 3 categories: low-, medium- and high-info pixels. We list their details as follows.
+\begin{enumerate}
+    % \item (0) Original views: original views are those images collected from real world or specific environments without any additional operations in texture or semantic level. 
+    \item Low-info pixels featuring low IIE and high PSI: most of them contain less semantic information and much noise (low IIE) but easy to cluster (high PSI).
+    \item Medium-info pixels featuring medium IIE and low PSI: they have medium texture information (medium IIE) but are hard to cluster for networks (low PSI).
+    \item High-info pixels featuing high IIE and high PSI: most of them are edges and corners with much deterministic information (high IIE) and they are easy to cluster for networks (high PSI).
+\end{enumerate}
+
+With the division of all pixels into three categories, our pixel augmentation goal can be formulated as follows:
+\begin{equation}
+%\begin{aligned}
+    \mathcal{L}(\rho_l,\rho_m,\rho_h, A_l, A_m, A_h) = \sum_{\alpha \in\{l,m,h\}} \rho_\alpha \mathcal{L}_{\alpha} (A_\alpha),
+    %  & \approx - \frac{1}{\tau} \Big(\rho_l S(x_l) +  \rho_m S(x_m) + \rho_h S(x_h)\Big) + \mathcal{N}(x) \\
+    %  & \mathcal{N}(x) = \mathbb{E} \Big[ \log \Big( \sum_{i} e^{f(\mathbf{x}_i^-^\top )f(\mathbf{x^+}) / \tau}\Big) \Big]
+%\end{aligned} 
+\label{eq:L}
+\end{equation}
+where the total loss $\mathcal{L}$ is split into 3 losses $\mathcal{L}_l$, $\mathcal{L}_m$ and $\mathcal{L}_h$ with their sampling ratios $\rho_l$, $\rho_m$ and $\rho_h$ and augmentation intensities $A_l$, $A_m$ and $A_h$. 
+The proposed strategy of augmenting pixels is to find the optimal {\bf sampling ratio} and {\bf augmentation intensity} for each category such that the overall loss is minimized. Next, we will elaborate how to do so one by one.
+
+%Specifically, there are two effective strategies: (i) reducing the number of low informative pixels; and (ii) using adaptive augmentation intensity for all pixels.
+
+% The experiment listed in Table~\ref{table:reduce_noise} tells us that reducing the number of low informative pixels leads to better performance. 
+
+% When we reduce the numbers of low informative pixels, medium and high informative get more training, which lead the network focus more on them. 
+% Therefore, to achieve this goal, we propose to use scaled entropy maps with a temperature as the selection weight map to sample views. 
+% Specifically, for each image $X_i$, we first calculate patch-wise entropy map $E^i$ of grayscale value distribution of each $K*K$ patch ($K=10$ in practice). We can assume our selection probability maps $P^X_{entr}$ by scaling the entropy maps with temperature $\tau$ $P^X_{entr} = \alpha (E)^\tau$. We can estimate these parameters by observing the convergence speed and patches of different entropy. 
+% For example, we estimate the parameters using the data demonstrated in Figure~\ref{fig:tmp_1} and get $\tau=0.26$ and $\alpha=0.43$.  
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{c|l|l|l|l|l|l}
+    \multicolumn{7}{c}{Exponential weight map} \\
+    \hline
+        $\alpha$   &  0   & 0.01 & 0.1 & 0.3   & 0.5 & 1.0 \\
+        \hline
+        MRE & 2.91 & 2.76 & 2.48 & 2.46 & 2.50 & 2.51 \\
+        \hline
+        \multicolumn{7}{c}{Piecewise weight map} \\
+        \hline
+        $d$ & 0  & 1    &  2  & 3   &  3.7 & 4.5 \\
+        \hline
+        MRE & 2.91 & 2.46 & 2.46 & 2.50 & 4.25 & 4.23 \\
+    \hline
+    \end{tabular}
+    \caption{Accuracy under different weight maps.}
+    \label{table:reduce_noise}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/entr1.pdf}
+    \caption{The \textcolor{green}{green} dashed line: entropy of all annotated landmarks are above this line. The \textcolor{violet}{violet} line (baseline): sampling probability are the same for all pixels. The \textcolor{red}{red} line: sampling probability of entropy based sampling weight map. \textcolor{blue}{Blue} line: sampling probability of hard threshold weight map.}
+    \label{fig:entr1}
+\end{figure}
+
+\subsection{Sampling ratio}  \label{sec:sratio}
+% \textcolor{red}{we design two kinds of schemes to analyse the pixel views.}
+Per prior knowledge, valuable areas must have much information to attract our attention. Medical landmarks, usually are localized on those meaningful points to guide clinical analysis. It is natural to focus on high-info regions. Besides this intuitive motivation, we also find that the PSI value of low-info pixels reaches a high value quickly, which preserves even when reducing sampling ratio of low-info pixels. Based on both intuitive and experimental findings, we propose to reduce $\rho_l$, thereby forcing the network to focus on medium- and high-info pixels.
+%  To optimze the loss defined in Eq. (\ref{eq:L}), we can reduce $\rho_l$ to force network to focus on medium- and high-info pixels. 
+% \textcolor{red}{[fixed?] IT is not very clear why such a reduction works}
+
+When reducing $\rho_l$, there comes a natural question: \textit{whether low-info areas are needed?}
+To explore it, we design two experimental schemes to analyze the pixels: (1) exponential weight map, $\rho(x) = H(x)^\alpha$; (2) piecewise weight map, $\rho(x) = \mathds{1}[H(x) \geq d]$. For (1), we gradually increase the exponent $\alpha$ of entropy weight map; For (2), we discard low-info pixel views $x_l$ and gradually increase the threshold $d$ between $x_l$ and $x_m$ (Figure~\ref{fig:entr1}). We empirically find that discarding a large amount of low-info pixel views is not advisable. As shown in Table~\ref{table:reduce_noise}, the pixels whose entropy is under 1 contain much less information and is actually useless for our model; the pixels whose entropy is within 1 to 3 contain both useful and useless information; and the pixels whose entropy is greater than 3 are mostly useful. 
+Considering the prior knowledge that the entropy of ground truth landmarks in Cephalometric are almost greater than 3.7 (\textcolor{green}{Green} dashed line in Figure~\ref{fig:entr1}), some low-info pixels are kept in order to utilize their contributions to the variety of contrastive learning as they may contain the knowledge we need. % (1) whether informative areas dominate the performance? 
+% (2) whether task related areas dominate the performance?
+% To explore above situation, we research about several probability maps: (1) edge maps (2) pseudo label maps (3) entropy maps. From the results listed in Table~\ref{table:edge}, we find that if we only focus on edge (high entropy areas), the performance degrades severely because we discard plenty of views benefit to SSL model. However, from the results of gaussian map we can know that much noise is discarded and almost task-related areas are reserved and reach the best performance. 
+% Finally, following conclusions can be obtained: (1) high entropy areas are more important, but low entropy areas also have valuable patches. (2) task-related areas exactly are most important, but we cannot know it. 
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/entr_line.pdf}
+%     \caption{Smoothed line plot of PSI while training. The numbers in the corner refer to the proportion of informative views. Larger value indicates higher probability of choosing informative views.}
+%     \label{fig:entr_line}
+% \end{figure}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1\linewidth]{figures/entr_select.pdf}
+%     \caption{Relationship between available areas of probability map and VI. Focusing on high entropy areas can exactly reduce PSI.}
+%     \label{fig:noise_entr}
+% \end{figure}
+
+
+\subsection{Augmentation intensity} \label{sec:info_view}
+
+After solving $\rho$ in Eqn.~(\ref{eq:L}), we then optimize $A$ for each group of pixels. 
+% We aim at augmenting pixels so that their feature representation are best discovered through pixel-wise contrastive learning.
+
+\subsubsection{Minimal necessary 
+shared information} \label{sec:aug_int}
+
+To investigate optimal views for contrastive learning, Tian {\it et al.} \cite{tian2020makes} propose the ``InfoMin" principle --- {\it A good set of views are those that share the {minimal information necessary} to perform well at the downstream task} and give two definitions and a proposition as follows.
+
+Given two random variables $\mathbf{v_1}$ and $\mathbf{v_2}$, which are two views of the data $x$ in practie, two encoders ($f_1$ for $\mathbf{v_1}$ and $f_2$ for $\mathbf{v_2}$) resulting representations $\mathbf{z_1} = f_1(\mathbf{v_1})$ and $\mathbf{z_1} = f_2(\mathbf{v_2})$, we have\\ 
+{\bf Definition 1}. {\it (Sufficient Encoder) The encoder $f_1$ of $\mathbf{v_1}$ is sufficient in the contrastive learning framework if and only if $I[\mathbf{v_1};\mathbf{v_2}]=I[f_1(\mathbf{v_1}); \mathbf{v_2}]$.} $I[\mathbf{v_1};\mathbf{v_2}]$ denotes the mutual information between $\mathbf{v_1}$ and $\mathbf{v_2}$. Generally speaking, a sufficient encoder refers to an well-trained encoder which is able to encode all necessary information relevant to tasks. In other words, the encoder $f_1$ is sufficient if $\mathbf{z_1}$ has kept all necessary information that the contrastive learning objective requires. Symmetrically, $f_2$ is sufficient if $I[\mathbf{v_1}; \mathbf{v_2}] = I[\mathbf{v_1}; f_2(\mathbf{v_2})]$.
+
+\noindent {\bf Definition 2}. {(\it Minimal Sufficient Encoder) A sufficient encoder $f_1$ of $\mathbf{v_1}$ is minimal if and only if $I[f_1(\mathbf{v_1}); \mathbf{v_1}] \leq I[f(\mathbf{v_1}); \mathbf{v_1}]$, $\forall f$ that is sufficient.} 
+Among those encoders which are sufficient, the minimal ones, that only extract relevant information of the contrastive task and throw away other irrelevant information, are proved to be the most robust encoders, and also what we mainly care about.
+% This is appealing in cases where the views are constructed in a way that all the information we care about is shared between them. 
+% The representations learned in the contrastive framework are typically used in a separate downstream task. To characterize what representations are good for a downstream task, we define the optimality of representations. \\
+%To make notation simple, we use $z$ to mean it can be either $\mathbf{z_1}$ or $\mathbf{z_1}$.
+%%
+% {\bf Definition 3}. {\it (Optimal Representation of a Task) For a task $\mathcal{T}$ whose goal is to predict a semantic label $y$ from the input data $x$, the optimal representation $z^*$ encoded from $x$ is the minimal sufficient statistic with respect to $y$.}
+% This says that a model built on top of $z^*$ has all the information necessary to predict $y$ as accurately as if it were to access $x$. Furthermore, $z^*$ maintains the smallest complexity, \textit{i.e.}, containing no other information besides that about $y$, which makes it more generalizable~\cite{DBLP:journals/corr/Soatto14}. We refer the reader to \cite{DBLP:journals/corr/Soatto14} for a more in depth discussion about optimal visual representations and minimal sufficient statistics.
+%
+
+\noindent\textbf{Proposition 1.} \textit{Suppose $f_1$ and $f_2$ are minimal sufficient encoders. Given a downstream task $\mathcal{T}$ with label $\mathbf{y}$, the optimal views created from the data $\mathbf{x}$ are $(\mathbf{v_1}^*, \mathbf{v_2}^*) = \arg\min_{\mathbf{v_1}, \mathbf{v_2}} I[\mathbf{v_1};\mathbf{v_2}]$, subject to $I[\mathbf{v_1}; \mathbf{y}]=I[\mathbf{v_2};\mathbf{y}]=I[\mathbf{x};\mathbf{y}]$. Given $\mathbf{v_1}^*$, $\mathbf{v_2}^*$, the representation $\mathbf{z_1}^*$ (or $\mathbf{z_2}^*$) learned by contrastive learning is optimal for $\mathcal{T}$, thanks to the minimality and sufficiency of $f_1$ and $f_2$.}
+The above proposition states the importance of the pairs with minimal necessary shared information, which motivates us to find them in pixel-wise CL.
+
+\subsubsection{Augmentation intensity estimation}
+Inspired by the ``InfoMin" principle, we can estimate our optimal augmentation parameters by maximizing augmentation intensity while keeping necessary minimal mutual information among corresponding pixels of the same semantic information.  
+
+% We can derive our goal from \textbf{Proposition 3.1}. 
+First, our goal is to find the minimal necessary MI which can be derived from \textbf{Proposition 1}, 
+\begin{equation}
+\begin{aligned}
+    \min I[v_i; v_j] &= \min \alpha_{ij} I[\mathcal{G}(v_i); \mathcal{G}(v_j)] \\
+    &\leq \mathbb{E} \{\alpha_{ij} I[\mathcal{G}(v_i); \mathcal{G}(v_j)]\} \\
+    &\leq \hat{\alpha} \mathbb{E} \{I[\mathcal{G}(v_i); \mathcal{G}(v_j)]\};~ \hat{\alpha}=\max(\alpha_{ij}),
+\end{aligned}
+\end{equation}
+where $v_i$ and $v_j$ are views corresponding to an identical key point), $\mathcal{G}(v)$ is the grayscale value distribution of $v$, and $\alpha_{ij}$ denotes a scale factor. As it is hard to estimate the mutual information between images, the common alternative way is to estimate the MI between grayscale value distribution of images. However, the progression from $v$ to $\mathcal{G}(v)$ loses information due to dimensional reduction; we suppose $\alpha_{ij}$ as the inverse ratio of information loss.  
+
+% We firstly estimate the necessary minimal mutual information. 
+Specifically, we select $k$ high-info pixels as key points $l$ from a randomly selected image $X_0$. We calculate the necessary mutual information $I_h$ of key points of interest $l_k$ by predicting the corresponding pixels $l^i_h$ in each images $X_i$ and calculating mutual information between the corresponding patches located at key points. 
+\begin{equation}
+    \mu = \mathbb{E} [I(\mathcal{G}(v_i), \mathcal{G}(v_j))] = \frac{1}{m} \frac{1}{n} \sum_{j=1}^k \sum_{i=1}^n I[l_k; l^i_k].
+    \label{eq:estimate1}
+\end{equation}
+The distribution of $I[l_k; l^i_k]$ is visualized in Figure~\ref{fig:mi_aug_bar}. Considering the noise involved and the desire to obtain robust representations, we assume $\alpha\mu$ is the minimal necessary mutual information and set $\alpha=1$. Thus, we adjust our augmentation policy and parameters $A=\{a_0, a_1, ..., a_k\}$ to augment the key points $l$ and control the mutual information between augmented landmarks and the original in the range of $\mu$. By doing this, we can increase the variance of pixel views while keeping the necessary semantic information.
+\begin{equation}
+    A = \arg \min_{A \in \mathbf{A} } ||~I[l;A(l)] - \mu~|| 
+    \label{eq:estimate2}
+\end{equation}
+In practice, we estimate parameters for two augmentation operations that adjust image brightness and contrast, that is, $A = \{a_{br}, a_{ct}\}$. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figures/aug_select.pdf}
+    \caption{Tendency of MRE and PSI under the influence of data augmentation intensity. The \textcolor{red}{Red} line is for MRE and the \textcolor{green}{green} line is for PSI. }
+    \label{fig:aug_select}
+\end{figure}
+
+\begin{figure*}
+    \centering
+    \begin{subfigure}{.33\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{figures/mi_aug_bar.png}  
+       \caption{}
+    \label{fig:mi_aug_bar}
+    \end{subfigure}
+    \begin{subfigure}{.33\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{figures/output2.png}  
+       \caption{}
+       \label{fig:aug_int2}
+    \end{subfigure}
+    \begin{subfigure}{.33\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{figures/aug-mi.pdf}  
+      \caption{}
+      \label{fig:aug_int3}
+    \end{subfigure}
+    \caption{Left: Distribution of mutual information among high informative pixel views. Middle: Relationship of Augmentation intensity (Brightness for example) and Entropy. Points are randomly selected from high informative pixels. Right: Trend of mutual information as data augmentation intensity changes.  }
+    \label{fig:aug_int}
+\end{figure*}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/mi_aug_bar.png}
+%     \caption{Distribution of mutual information among high informative pixel views. }
+%     \label{fig:mi_aug_bar}
+% \end{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/output2.png}
+%     \caption{Relationship of Augmentation intensity (Brightness for example) and Entropy. Points are randomly selected from high informative pixels.}
+%     \label{fig:aug_int2}
+% \end{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/output3.png}
+%     \caption{Trend of mutual information as data augmentation intensity changes}
+%     \label{fig:aug_int3}
+% \end{figure}
+
+%\subsubsection{Adaptive augmentation intensity} \label{sec:adap}
+% Experiments find medium pixel have lowest PSI -> larger variance between pixels in all images -> lower necessary MI -> larger augmentation
+According to Figure~\ref{fig:psi_ddi}, we can know that different pixels behave differently, that is, medium-info pixels have the lower PSI than high-info pixels, meaning that they have a larger variance among the feature space. In fact, each pixel for contrastive learning can be seen as an identical class. Therefore, ideally we can apply the InfoMin principle on pixels through minimizing the below loss,
+\begin{equation}
+    \mathcal{L} = \sum_i \mathcal{L}(\tau(x_i, A_i), x_i)
+\end{equation}
+However, it is hard to estimate a different $A_i$ for each pixel $x_i$ due to its time-consuming nature, thus a practical way is to cluster $x_i$ by their IIE scores. 
+Figure~\ref{fig:aug_int2} demonstrates the distribution of relationship of augmentation intensity (brightness for example) and entropy, which also presents a negative correlation. 
+% Larger variance means the less mutual information between pixels, leading to a larger estimated augmentation intensity through the method above (Eqn.~(\ref{eq:estimate1})(\ref{eq:estimate2})). 
+% According to Figure~\ref{fig:aug_int2}, we can know that the appropriate augmentation intensity decrease as the entropy increase. 
+% According to Figure~\ref{fig:aug_int3}, we can know that mutual information decreases quickly during intensity increase, but 
+% In addition, when we estimate the augmentation intensity using medium entropy views, we can find that the intensity and hyper-parameters are much higher than which of high entropy views~\ref{fig:aug_int}. 
+% The necessary mutual information between medium entropy views is less than high entropy views, and medium entropy views are more fitting for stronger intensity of data augmentation. 
+
+Based on the above discussions, we propose to cluster pixels into three categories $x_l, x_m, x_h$ as mentioned above and estimate the minimal necessary mutual information $\mu_l, \mu_m, \mu_h$ and augmentation intensity $A_l, A_m, A_h$ for each category following the above method (Eqns.~(\ref{eq:estimate1})(\ref{eq:estimate2})) and propose an adaptive data augmentation as follows.
+Given the low-, medium- and high-info pixels $x_l, x_m, x_h$ and their corresponding augmentation $A_l, A_m, A_h$, we change the original loss function to the adaptive loss as follows:
+\begin{equation}
+%\begin{aligned}
+    \mathcal{L} = \sum_{\alpha \in \{l,m,h\}} \rho_\alpha \mathcal{L}_\alpha(f(\tau (x_\alpha, A_\alpha), x_\alpha)),
+%\end{aligned}
+\end{equation}
+where $\tau(x, A)$ is the image processing operations on image $x$ with augmentation $A$. Here we assume that the coefficients $\{\rho_l,\rho_m,\rho_h\}$ are found in Section \ref{sec:sratio} and stay fixed.
+% For adaptive intensity, we apply augmentation operations with lower intensity on rich informative views and apply operations with higher intensity on less informative views. The training process keeps same. 
+
+\subsubsection{Analysis}
+We try to explore the optimal augmentation intensity for each kinds of pixels. 
+The U-shape curve in Figure~\ref{fig:aug_select} tells us that there exists an optimal range of augmentation intensity. Once the intensity exceeds the threshold, the performance gradually decreases. The valley of the curve changes as the task varies. Locating different landmarks can be seen as different tasks, which leads to multiple optimal augmentation intensities. 
+
+Stronger optimal augmentation intensity is not strictly correlated with lower entropy, but also depends on the distribution of datasets. Because low-info pixels are neglected, tuning $A_l$ has less impact on the model performance. Therefore, we mainly concentrate on tuning $A_m$ and $A_h$. Table~\ref{table:adap_aug} shows that 
+% \textcolor{red}{More results needed}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{l|l|l|l|l}
+    \hline
+         $A_h \backslash A_m$ & 1.2 & 1.3 & 1.4 & 1.5 \\
+         \hline
+         1.2 & 2.40 & 2.37 & \textbf{2.34} & 2.38 \\
+         \hline
+         1.3 & 2.40 & 2.38 & 2.39 & 2.43\\
+         \hline
+         1.4 & 2.42& 2.42 & 2.43 & 2.44\\
+         \hline
+    \end{tabular}
+    \caption{Comparison of different augmentation parameters $A_h$, $A_m$}
+    \label{table:adap_aug}
+\end{table}
+
+\subsection{Method summary}
+Our methods can be concluded into 3 sequential steps: 
+(1) Reducing $\rho_l$ by entropy based sampling weight map. 
+(2) Estimating data augmentation parameter by mutual information; and
+(3) Applying adaptive data augmentation.
+% Following setup in CL, let $\tau \in T$ be the transforms, $c \in C$ be the semantic information. We have views $X=\tau(c), \tau \in T, c \in C$. Thus, we have two ways to increase variations of views: resample $c$ and adjust $T$.
+%In sum, the overall training loss $\mathcal{L}$ can be concluded as follows:
+%\begin{equation}
+%\mathcal{L} = \sum_{\alpha \in \{l,m,h\}} \rho_\alpha \mathcal{L}_\alpha(f(\tau (x_\alpha, A_\alpha), x_\alpha)).
+%\begin{aligned}
+%    \mathcal{L} &= \rho_l \mathcal{L}_l (f(\tau(x_l, A_l), x_l)) + \rho_m \mathcal{L}_m (f(\tau(x_m, A_m), x_m)) \\
+%                &+ \rho_h \mathcal{L}_h (f(\tau(x_h, A_h), x_h))
+%\end{aligned}
+%\end{equation}
+
+\section{Experiment}
+\subsection{Datasets and Settings}
+\bheading{Cephalometric:} It is a widely-used public dataset for cephalometric landmark detection, containing 400 radiographs, and is provided\footnote{Kaggle, Cephalometric X-Ray Landmarks Detection Challenge, \url{https://www.kaggle.com/jiahongqian/cephalometric-landmarks/discussion/133268}.} in IEEE ISBI 2015 Challenge~\cite{wang2016benchmark}. 
+There are 19 landmarks of anatomical significance labeled by 2 expert doctors in each radiograph. 
+% The average of the annotations by two doctors is set as the ground truth. The image size is $1935 \times 2400$ and the pixel spacing is 0.1mm. The dataset is split into 150 and 250 for training and testing respectively, referring to the official division. 
+All analysis experiments are conducted on Cephalometric dataset. 
+
+\bheading{Hand X-ray:}
+It is also a public dataset including 909 X-ray images of hands. The setting of this dataset follows~\cite{ref_scn}. The first 609 images are used for training and the rest for testing. 
+% The image size varies among a small range, so all images are resized to 384$\times$384.
+
+%\subsection{Settings}
+\bheading{Metrics:} Following the official challenge~\cite{wang2016benchmark}, we use a mean radial error (MRE) to measure the Euclidean distance between prediction and ground truth, and successful detection rate (SDR) in four radii (2mm, 2.5mm, 3mm, and 4mm). 
+% For HaN dataset, we follow~\cite{lei2021contrastive} to add another metric besides MRE: We construct 3D bounding boxes from generated landmarks and calculate the Dice coefficient between the predicted and ground-truth B-boxes.
+
+\bheading{Model:} We build our encoder following the SSL module of CC2D~\cite{yao2021one}. All model and training settings are same as \cite{yao2021one}. In addition, the one-shot template used for evaluation are selected by \cite{quan2021images} in unsupervised style. 
+% CC2D~\cite{yao2021one} is a pixel-wise contrastive learning framework for landmark detection.
+
+\bheading{Implementation details}
+All training and testing images are resized to $384 \times 384$.
+In section \ref{sec:lowinfo}, the temperature $\tau$ used in entropy map is $0.3$. In section \ref{sec:aug_int}, augmentation policy are colorjitter, and rotation. 
+% The maximum angle of rotation is $30^o$. The parameter contrast and brightness in colorjitter are set 1.6 and 1.2 to reach the best performance.
+
+\begin{table*}
+    
+\begin{minipage}[t]{0.49\textwidth}
+% \begin{table}[t]
+\centering
+\footnotesize    
+\caption{Comparison of SSL for \textit{local feature matching} with other approaches on Cephalometric~\cite{wang2016benchmark} testset. }
+\begin{threeparttable}
+\begin{tabular}{l|lcccc}
+\hline
+ \multirow{2}{*}{Method} & \multirow{2}{*}{\tabincell{c}{MRE ($\downarrow$) \\ (mm)}} &  \multicolumn{4}{c}{SDR ($\uparrow$) (\%)} \\ \cline{3-6}
+  &   & 2mm & 2.5mm & 3mm & 4mm \\ \hline
+% \cline{2-7}
+baseline   & 2.91 & 39.85 & 48.94 & 58.87 & 72.31 \\
+% \hline
+Zhu.~\cite{zhu2021improving}*   & 4.19 \textcolor{red}{(+1.28)} & 24.35 & 32.38 & 42.66 & 60.10\\
+MOCHI\cite{kalantidis2020hard}*  & 2.56 \textcolor{blue}{(-0.35)} & 50.35 & 59.19 & 68.70 & 82.10 \\
+Un-mix\cite{shen2022mix}*  & 2.52 \textcolor{blue}{(-0.39)} & 44.82 & 56.48 & 67.57 & 83.87 \\
+Ours   & \textbf{2.34 \textcolor{blue}{(-0.57)}} & \textbf{51.28} & \textbf{62.88} & \textbf{73.70} & \textbf{86.50} \\
+\hline
+\end{tabular}
+\begin{tablenotes}
+    \footnotesize
+    \item[] * using augmentation parameters estimated by our method.
+\end{tablenotes}
+\end{threeparttable}
+\label{table:main2}
+% \end{table}
+\end{minipage}
+%%
+\begin{minipage}[t]{0.47\textwidth}
+% \begin{table}[t]
+\centering
+\footnotesize    
+\caption{Ablation study for components in our method on Cephalometric~\cite{wang2016benchmark} testset.}
+\begin{threeparttable}
+\begin{tabular}{lll|lllll}
+\hline
+\multirow{2}{*}{Entr}  & \multicolumn{2}{c|}{Aug} & \multirow{2}{*}{\tabincell{c}{MRE ($\downarrow$) \\ (mm)}} & \multicolumn{4}{c}{SDR ($\uparrow$) (\%)} \\ 
+\cline{5-8}
+&   A1     &   A2    & &     2mm & 2.5mm & 3mm & 4mm \\
+\hline
+        &              &              &       2.91 & 39.85 & 48.94 & 58.87 & 72.31 \\
+         \checkmark &              &               &   2.46 \textcolor{blue}{(-0.45)}  & 43.72 & 54.65 & 66.48 & 82.65  \\
+         \checkmark & \checkmark   &               &   2.40 \textcolor{blue}{(-0.51)}  & 48.65 & 59.91 & 71.64 & 85.85 \\ %v2_br_ct
+         \checkmark & \checkmark   & \checkmark    & \textbf{2.34 \textcolor{blue}{(-0.57)}} & \textbf{51.28} & \textbf{62.88} & \textbf{73.70} & \textbf{86.50} \\
+
+\hline
+\end{tabular}
+\begin{tablenotes}
+    \footnotesize
+    \item[] \textbf{Entr}: use entropy-based weight map; \textbf{A1}: use estimated parameters by Eqn.~(\ref{eq:estimate2}); \textbf{A2}: use adaptive augmentation.
+\end{tablenotes}
+\end{threeparttable}
+
+\label{table:abla}
+% \end{table}
+\end{minipage}
+\end{table*}
+
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Comparison of the \textit{supervised} and \textit{one-shot} approaches with different pre-trained model on Cephalometric~\cite{wang2016benchmark} and Hand X-ray~\cite{ref_scn} testset. }
+% * represents the performances copied from their original papers. \# represents the performances we re-implement with limited labeled images. We additionally evaluate the performance of CC2D-SelfSL on the test set.
+\begin{threeparttable}
+\begin{tabular}{l|l|l|lllll}
+\multicolumn{8}{c}{Cephalometric Dataset} \\ 
+\hline
+\multirow{2}{*}{Type} & \multirow{2}{*}{Model} & \multirow{2}{*}{Pretrain} & \multirow{2}{*}{\tabincell{c}{MRE ($\downarrow$) \\ (mm)}} &  \multicolumn{4}{c}{SDR ($\uparrow$) (\%)} \\ \cline{5-8}
+ &  & & & 2 mm & 2.5 mm & 3 mm & 4 mm \\ \hline
+% & Ibragimov \textit{et al.}~\cite{ibragimov2015computerized}* & 150 & - & 68.13 & 74.63 & 79.77 & 86.87\\
+%  & Lindner \textit{et al.}~\cite{lindner2015fully}* & 150 & 1.77 & 70.65 & 76.93 & 82.17 & 89.85\\
+%  & Urschler \textit{et al.}~\cite{ref_urschler}* & 150 & - & 70.21 & 76.95 & 82.08 & 89.01\\
+\multirow{15}{*}{Supervised}  & \multirow{5}{*}{U-Net~\cite{unet}} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 2.07 & 56.54 & 67.83 & 79.43 & 91.76 \\
+ &  & Zhu~\cite{zhu2021improving}  &  1.96  \textcolor{blue}{(-0.11)} & 61.38\textcolor{blue}{$\uparrow$} & 72.06\textcolor{blue}{$\uparrow$} & 82.02\textcolor{blue}{$\uparrow$} & 93.05\textcolor{blue}{$\uparrow$}\\
+ &  & MOCHI~\cite{kalantidis2020hard} & 1.94 \textcolor{blue}{(-0.13)} & 62.03\textcolor{blue}{$\uparrow$} & 73.51\textcolor{blue}{$\uparrow$} & 84.02\textcolor{blue}{$\uparrow$} & 93.18\textcolor{blue}{$\uparrow$}\\
+ & & Un-mix~\cite{shen2022mix} & 1.94 \textcolor{blue}{(-0.13)} & 61.95\textcolor{blue}{$\uparrow$} & 73.20\textcolor{blue}{$\uparrow$} & 82.96\textcolor{blue}{$\uparrow$} & 93.17\textcolor{blue}{$\uparrow$} \\
+ & & ours  & 1.93 \textcolor{blue}{(-0.14)} & 61.51\textcolor{blue}{$\uparrow$} & 72.84\textcolor{blue}{$\uparrow$} & 83.05\textcolor{blue}{$\uparrow$} & 93.38\textcolor{blue}{$\uparrow$}\\
+\cline{2-8}
+ & \multirow{5}{*}{ERE~\cite{McCouat_2022_CVPR}} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 1.42 & 80.10 & 87.34 & 91.81 & 96.19 \\
+ & & Zhu~\cite{zhu2021improving} & 1.41 \textcolor{blue}{(-0.01)} & 79.24\textcolor{red}{$\downarrow$} & 86.33\textcolor{red}{$\downarrow$} & 90.92\textcolor{red}{$\downarrow$} & 95.38\textcolor{red}{$\downarrow$} \\
+ & & MOCHI~\cite{kalantidis2020hard} & 1.40 \textcolor{blue}{(-0.02)} & 79.98\textcolor{red}{$\downarrow$} & 86.95\textcolor{red}{$\downarrow$} & 91.14\textcolor{red}{$\downarrow$} & 95.90\textcolor{red}{$\downarrow$}\\
+ & & Un-mix~\cite{shen2022mix}  & 1.41 \textcolor{blue}{(-0.01)} & 79.70\textcolor{red}{$\downarrow$} & 86.68\textcolor{red}{$\downarrow$} & 91.06\textcolor{red}{$\downarrow$} & 95.48\textcolor{red}{$\downarrow$} \\
+ & & ours  & 1.39 \textcolor{blue}{(-0.03)} & 80.15\textcolor{blue}{$\uparrow$} & 87.17\textcolor{red}{$\downarrow$} & 91.32\textcolor{red}{$\downarrow$} & 95.89\textcolor{red}{$\downarrow$}\\
+\cline{2-8}
+%  & GU$^2$-Net~\cite{zhu2021you} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 1.69 & 76.95 & 83.98 & 88.82 & 94.21\\
+ & \multirow{5}{*}{GU$^2$-Net~\cite{zhu2021you}} & None & 1.34 & 83.01 & 88.82 & 93.09 & 97.34\\
+ & & Zhu~\cite{zhu2021improving} & 1.32 \textcolor{blue}{(-0.02)} & 83.26\textcolor{blue}{$\uparrow$} & 89.01\textcolor{blue}{$\uparrow$} & 93.04\textcolor{blue}{$\uparrow$} & 97.42\textcolor{blue}{$\uparrow$}\\
+ & & MOCHI~\cite{kalantidis2020hard} & 1.31 \textcolor{blue}{(-0.03)} & 83.47\textcolor{blue}{$\uparrow$} & 89.13\textcolor{blue}{$\uparrow$} & 93.07\textcolor{blue}{$\uparrow$} & 97.51\textcolor{blue}{$\uparrow$}\\
+ & & Un-mix~\cite{shen2022mix}  & 1.31 \textcolor{blue}{(-0.03)} & 83.45\textcolor{blue}{$\uparrow$} & 89.47\textcolor{blue}{$\uparrow$} & 93.30\textcolor{blue}{$\uparrow$} & 97.13\textcolor{blue}{$\uparrow$}\\
+ & & ours  & 1.28 \textcolor{blue}{(-0.06)} & 84.50\textcolor{blue}{$\uparrow$} & 89.78\textcolor{blue}{$\uparrow$} & 93.38\textcolor{blue}{$\uparrow$} & 97.34\textcolor{blue}{$\uparrow$} \\
+\cline{1-8}
+
+\multirow{5}{*}{One-shot} & \multirow{5}{*}{CC2D-S2~\cite{yao2021one}$^*$} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 2.85 & 39.30 & 50.12 & 61.30 & 77.93 \\
+ & & Zhu~\cite{zhu2021improving}  & 2.87 \textcolor{red}{(+0.02)} & 38.73\textcolor{red}{$\downarrow$} & 49.57\textcolor{red}{$\downarrow$} & 61.15\textcolor{red}{$\downarrow$} & 78.10\textcolor{blue}{$\uparrow$}\\
+ & & MOCHI~\cite{kalantidis2020hard}  & 2.82 \textcolor{blue}{(-0.03)}  & 39.51\textcolor{blue}{$\uparrow$} & 50.73\textcolor{blue}{$\uparrow$} & 62.10\textcolor{blue}{$\uparrow$} & 78.35\textcolor{blue}{$\uparrow$} \\
+ & & Un-mix~\cite{shen2022mix} & 2.42 \textcolor{blue}{(-0.33)} & 46.06\textcolor{blue}{$\uparrow$} & 57.74\textcolor{blue}{$\uparrow$} & 70.14\textcolor{blue}{$\uparrow$} & 86.33\textcolor{blue}{$\uparrow$} \\
+& & ours  & 2.31 \textcolor{blue}{(-0.44)} & 52.10\textcolor{blue}{$\uparrow$} & 63.20\textcolor{blue}{$\uparrow$} & 73.45\textcolor{blue}{$\uparrow$} & 86.73\textcolor{blue}{$\uparrow$} \\
+\hline
+\hline
+
+\multicolumn{8}{c}{HandXray Dataset} \\ 
+\hline
+\multirow{15}{*}{Supervised} & \multirow{5}{*}{U-Net~\cite{unet}} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 1.32 & 82.78 & 90.52 & 94.49 & 97.82 \\
+ &  & Zhu~\cite{zhu2021improving}  & 1.30 \textcolor{blue}{(-0.11)} & 83.88\textcolor{blue}{$\uparrow$} & 91.10\textcolor{blue}{$\uparrow$} & 94.97 \textcolor{blue}{$\uparrow$} & 98.15\textcolor{blue}{$\uparrow$}\\
+ &  & MOCHI~\cite{kalantidis2020hard} & 1.27 \textcolor{blue}{(-0.13)} & 85.29\textcolor{blue}{$\uparrow$} & 91.63\textcolor{blue}{$\uparrow$} & 95.11\textcolor{blue}{$\uparrow$} & 98.08\textcolor{blue}{$\uparrow$}\\
+ & & Un-mix~\cite{shen2022mix} & 1.30 \textcolor{blue}{(-0.13)} & 81.94\textcolor{blue}{$\uparrow$} & 89.52\textcolor{blue}{$\uparrow$} & 93.96\textcolor{blue}{$\uparrow$} & 97.90\textcolor{blue}{$\uparrow$} \\
+ & & ours  & 1.24 \textcolor{blue}{(-0.14)} & 84.48\textcolor{blue}{$\uparrow$} & 91.33\textcolor{blue}{$\uparrow$} & 95.09\textcolor{blue}{$\uparrow$} & 98.36\textcolor{blue}{$\uparrow$}\\
+\cline{2-8}
+ & \multirow{5}{*}{ERE~\cite{McCouat_2022_CVPR}} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 0.396 & 99.01 & 99.44 & 99.64 & 99.74 \\
+ & & Zhu~\cite{zhu2021improving} & 0.381 \textcolor{blue}{(-0.01)} & 99.01\textcolor{red}{$\downarrow$} & 99.38\textcolor{red}{$\downarrow$} & 99.58\textcolor{red}{$\downarrow$} & 99.70\textcolor{red}{$\downarrow$} \\
+ & & MOCHI~\cite{kalantidis2020hard} & 0.380 \textcolor{blue}{(-0.02)} & 99.02\textcolor{blue}{$\uparrow$} & 99.41\textcolor{red}{$\downarrow$} & 99.56\textcolor{red}{$\downarrow$} & 95.71\textcolor{red}{$\downarrow$}\\
+ & & Un-mix~\cite{shen2022mix}  & 0.380 \textcolor{blue}{(-0.01)} & 99.02\textcolor{blue}{$\uparrow$} & 99.42\textcolor{red}{$\downarrow$} & 99.55\textcolor{red}{$\downarrow$} & 95.70\textcolor{red}{$\downarrow$} \\
+ & & ours  & 0.377 \textcolor{blue}{(-0.03)} & 99.04\textcolor{blue}{$\uparrow$} & 99.43\textcolor{red}{$\downarrow$} & 99.58\textcolor{red}{$\downarrow$} & 99.71\textcolor{red}{$\downarrow$}\\
+ 
+ \cline{2-8}
+ & \multirow{5}{*}{GU$^2$-Net~\cite{zhu2021you}} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 0.683 & 96.13 & 97.98 & 98.77 & 99.39\\
+ & & Zhu~\cite{zhu2021improving} & 0.684 \textcolor{red}{(+0.001)} & 96.17\textcolor{blue}{$\uparrow$} & 97.95\textcolor{red}{$\downarrow$} & 98.79\textcolor{blue}{$\uparrow$} & 99.47\textcolor{blue}{$\uparrow$}\\
+ & & MOCHI~\cite{kalantidis2020hard} & 0.680 \textcolor{blue}{(-0.003)} & 96.20\textcolor{blue}{$\uparrow$} & 98.00\textcolor{blue}{$\uparrow$} & 98.75\textcolor{red}{$\downarrow$} & 99.44\textcolor{blue}{$\uparrow$}\\
+ & & Un-mix~\cite{shen2022mix} & 0.681 \textcolor{blue}{(-0.002)} & 96.17\textcolor{blue}{$\uparrow$} & 97.95\textcolor{red}{$\downarrow$} & 98.74\textcolor{red}{$\downarrow$} & 99.42\textcolor{blue}{$\uparrow$}\\
+ & & ours & 0.671 \textcolor{blue}{(-0.019)} & 96.21\textcolor{blue}{$\uparrow$} & 98.04\textcolor{blue}{$\uparrow$} & 98.72\textcolor{red}{$\downarrow$} & 99.43\textcolor{blue}{$\uparrow$}\\
+%  & & ours & 0.671 \textcolor{blue}{(-0.0?)} & 96.21\textcolor{blue}{$\uparrow$} & 98.04\textcolor{blue}{$\uparrow$} & 98.72\textcolor{blue}{$\uparrow$} & 99.43\textcolor{blue}{$\uparrow$}\\
+ \cline{1-8}
+ \multirow{5}{*}{One-shot}& \multirow{5}{*}{CC2D-S2~\cite{yao2021one}$^*$} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 2.22 & 56.90 & 70.90 & 78.30 & 86.90 \\
+ & & Zhu~\cite{zhu2021improving}  & 2.26 \textcolor{red}{(+0.04)} & 63.47\textcolor{blue}{$\uparrow$} & 72.28\textcolor{blue}{$\uparrow$} & 78.26\textcolor{red}{$\downarrow$} & 86.07\textcolor{red}{$\downarrow$}\\
+ & & MOCHI~\cite{kalantidis2020hard}  & 1.98 \textcolor{blue}{(-0.08)} & 68.35\textcolor{blue}{$\uparrow$} & 77.02\textcolor{blue}{$\uparrow$} & 82.73\textcolor{blue}{$\uparrow$} & 89.57\textcolor{blue}{$\uparrow$} \\
+ & & Un-mix~\cite{shen2022mix} & 2.03 \textcolor{blue}{(-0.08)} & 67.76\textcolor{blue}{$\uparrow$} & 76.02\textcolor{blue}{$\uparrow$} & 81.78\textcolor{blue}{$\uparrow$} & 88.88\textcolor{blue}{$\uparrow$} \\
+& & ours  & 1.70 \textcolor{blue}{(-0.44)} & 72.33\textcolor{blue}{$\uparrow$} & 80.04\textcolor{blue}{$\uparrow$} & 85.19\textcolor{blue}{$\uparrow$} & 92.49\textcolor{blue}{$\uparrow$} \\
+%  & CC2D-Self & 1 (SCP~\cite{quan2021images}) & ? & 56.90 & 70.90 & 78.30 & 86.90 \\
+\hline
+\multicolumn{8}{c}{H\&N Dataset} \\ 
+\hline
+ \multirow{2}{*}{Type} & \multirow{2}{*}{Model} & \multirow{2}{*}{Pretrain} & \multicolumn{5}{c}{MRE ($\downarrow$) (mm)} \\
+ \cline{4-8}
+  &  & & Avg. & BS & MD & PL & PR \\ 
+  \hline
+  \multirow{2}{*}{One-shot} & \multirow{2}{*}{CC2D-S2~\cite{yao2021one}$^*$} & Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009} & 10.78 & 7.70 &	16.30 &	8.65 & 10.47 \\
+  &  & Zhu~\cite{zhu2021improving}     & 14.50 & 7.47\textcolor{blue}{$\downarrow$} &	18.17\textcolor{red}{$\uparrow$} &	16.96\textcolor{red}{$\uparrow$} & 15.43\textcolor{red}{$\uparrow$} \\
+  &  & MOCHI~\cite{kalantidis2020hard} & 13.05 & 6.98\textcolor{blue}{$\downarrow$} &	15.27\textcolor{blue}{$\downarrow$} &	14.97\textcolor{red}{$\uparrow$} & 14.99\textcolor{red}{$\uparrow$} \\
+  &  & Un-mix~\cite{shen2022mix}       & 11.75 & 7.31\textcolor{blue}{$\downarrow$} &	15.18\textcolor{blue}{$\downarrow$} &	12.32\textcolor{red}{$\uparrow$} & 12.22\textcolor{red}{$\uparrow$} \\
+  & & ours & 10.10\textcolor{blue}{(-0.68)} & 7.12\textcolor{blue}{$\downarrow$} &	15.32\textcolor{blue}{$\downarrow$} &	8.11\textcolor{blue}{$\downarrow$} &	9.88\textcolor{blue}{$\downarrow$} \\
+  \hline
+\end{tabular}
+\begin{tablenotes}
+    \footnotesize
+    \item[] CC2D-S2~\cite{yao2021one}: results of the 2nd stage of CC2D. Imagenet~\cite{DBLP:conf/cvpr/DengDSLL009}: loading weights pretrained with Imagenet dataset for backbone. BS: Brainstem; MD: Mandible; PL: Left parotid; PR: Right parotid. 
+\end{tablenotes}
+
+\end{threeparttable}
+\label{table:main}
+\end{table*}
+
+\subsection{Main results}
+We quantitatively compare our method and other latest methods, Zhu~\cite{zhu2021improving}, MOCHI~\cite{kalantidis2020hard} and Un-mix~\cite{shen2022mix} on Cephalometric dataset~\cite{wang2016benchmark} in Table~\ref{table:main2}. 
+For the reason of our SSL model consisting of two seperate encoders which are trained by their own gradients, and do not share the parameters, Zhu~\cite{zhu2021improving} cross-fuses the features from two different projection space and cause performance degrading. MOCHI~\cite{kalantidis2020hard} leverage mixed negative features and hard example mining to concentrate more on negative views, but they ignore the influence of positive views. Un-mix~\cite{shen2022mix} create views by linear interpolation on image level, but the semantic information fusing on feature level is more effective.
+With the help of new views generated by feature interpolation, and image mixing up, MOCHI and Un-mix improves the performance significantly by 0.35 and 0.39. 
+% Robin improves the baseline model by focusing on hard samples by ?. 
+In addition, we combine the advantages of our entropy map and our optimal augmentation policy with these methods and achieve more effective results. Our method outperforms other methods and greatly improves the baseline model by 0.56 in MRE.
+
+We also load these SSL models as pretrained weights on several supervised models~\cite{ref_scn,zhu2021you,McCouat_2022_CVPR} as well as a one-shot models~\cite{yao2021one} and evaluate them on Cephalometric~\cite{wang2016benchmark} and Hand-Xray datasets. To be noted that, CC2D consists of two stages, self- and semi-supervised learning modules. We apply our pre-trained model as the stage one model and then finetune on the semi-supervised model. As shown in Table~\ref{table:main}, all models benifit from most pretrained models on MRE. In particular, the model using our SSL pretrained model achieve the largest improvement. To be noted that, the SDR degrades in all four scales because the pretrained model tends to optimize the bad cases, and pay less attention to those fitting cases. 
+% Figure~\ref{fig:hard_case} demonstrates such issue that the original model make bad predictions for hard cases, but model with our pretrained model are more robust to the hard cases.
+
+\begin{figure*}[]
+\begin{minipage}{0.36\linewidth}
+ \centering
+ \includegraphics[width=\linewidth]{figures/entr_maps.png}
+\end{minipage}
+%
+\begin{minipage}{0.43\linewidth}
+ \centering
+ \includegraphics[width=\linewidth]{figures/entr_ks.pdf}
+\end{minipage}
+%
+\begin{minipage}{0.2\linewidth}
+    \centering
+    \begin{tabular}{l|l}
+    \multicolumn{2}{c}{Analysis of PS} \\
+    \hline
+        PS  & MRE  \\
+        \hline
+        10 & 2.34   \\
+        \hline
+        32 & 2.44 \\
+        \hline 
+        128 & 2.46 \\
+    \hline
+    \end{tabular}
+    % \label{table:entr_ps}
+\end{minipage}
+\caption{Left: The IIE maps generated by different sizes of image patches; Middle: The IIE distribution of pixels using different sizes of patches; and Right: Results with entropy maps of different patch sizes (PS).}
+\label{fig:entr_ps}
+\end{figure*}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.9\linewidth]{figures/entr_maps.png}
+%     \caption{KS: kernel size for calculating image information entropy. }
+%     \label{fig:entr_maps}
+% \end{figure}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/entr_ks.pdf}
+%     \caption{IIE Distribution of pixels using different sizes of patches}
+%     \label{fig:my_label}
+% \end{figure}
+
+
+\subsection{Ablation study}
+Table~\ref{table:abla} demonstrates the impact of each module. 
+As shown in Table~\ref{table:abla}, entropy map and data augmentation parameter optimization bring a large improvement to SSL training. 
+
+Generation of image information entropy maps are also relevant to our method. As shown in Figure~\ref{fig:entr_ps}, compared with kernel size of 10 ({\bf default} value in our method), larger patch size (32 and 128) will include more information to increase the entropy of the corresponding pixel, resulting a narrowed range of IIE and losing the advantage of capturing patch details. 
+
+%\subsubsection
+{\bf Limitations:}
+Mutual information is just a simple tool to approximate the correlation between views, thus error exists and not accurate. More accurate tools are needed. 
+
+% analysis
+% Q: only corners and borders contributes?
+% experiments show that no, 
+% Q: noisy views converge faster? 
+% Experiments show that noisy converge faster, higher PSI, 
+
+\section{Conclusion}
+In this paper, we introduce "view space" to describe input images and analyze how noisy and informative views impact the training process, and why generated views can benifit the performance of models. 
+Based on the above principle, we propose three ways to generate better views for pixel-wise contrastive learning models, including entropy-map-based patch selection, task-agnostic unsupervised augmentation parameters optimization, and feature-level semantic information mixup. 
+Extensive experiments show our advantages compared to other methods. The model trained by our unsupervised pipeline can be used as pretrained model for many similar tasks and succeed to improve supervised models and few-shot models without extra data. 
+
+
+%%%%%%%%% REFERENCES
+{\small
+\bibliographystyle{ieee_fullname}
+\bibliography{egbib}
+}
+
+\end{document}
